@@ -14,10 +14,9 @@ export default function Index() {
   const START_TIME = 25 * 60;
   const [secondsLeft, setSecondsLeft] = useState(START_TIME);
   const [running, setRunning] = useState(false);
-  const intervalRef = useRef(null);
+  const intervalRef = useRef<number | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Track finger movement flags
   const movedDownRef = useRef(false);
   const movedUpRef = useRef(false);
   const movedBeyondThresholdRef = useRef(false);
@@ -38,8 +37,10 @@ export default function Index() {
   }, [scaleAnim]);
 
   const resetTimer = () => {
-    clearInterval(intervalRef.current);
-    intervalRef.current = null;
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setSecondsLeft(START_TIME);
     setRunning(false);
   };
@@ -52,19 +53,26 @@ export default function Index() {
     animateScale();
 
     if (running) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       setRunning(false);
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
 
       setRunning(true);
 
       intervalRef.current = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
+            if (intervalRef.current !== null) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
             setRunning(false);
             return 0;
           }
@@ -117,11 +125,13 @@ export default function Index() {
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+      }
     };
   }, []);
 
-  const formatTime = useCallback((secs) => {
+  const formatTime = useCallback((secs: number) => {
     const m = Math.floor(secs / 60)
       .toString()
       .padStart(2, "0");
@@ -135,7 +145,7 @@ export default function Index() {
         style={styles.pressable}
         onPress={handleStart}
         onLongPress={handleLongPress}
-        delayLongPress={1000}
+        delayLongPress={300}
       >
         <Animated.Text
           style={[styles.timer, { transform: [{ scale: scaleAnim }] }]}
